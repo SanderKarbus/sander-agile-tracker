@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agile Tracker - Kanban</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://googleapis.com">
+  <link rel="preconnect" href="https://gstatic.com" crossorigin>
+  <link href="https://googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="glass-bg"></div>
+
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <h1>Agile Tracker</h1>
+        <p class="subtitle">Sinu meeskonna agiilne töölauarakendus</p>
+      </div>
+      <button class="btn-primary" id="open-modal-btn">+ Lisa uus Story</button>
+    </header>
+
+    <!-- KANBAN LAUD -->
+    <main class="kanban-board">
+      
+      <!-- TODO VEERG -->
+      <div class="kanban-column" id="col-todo" data-status="todo">
+        <div class="column-header">
+          <h2>Todo / Backlog</h2>
+          <span class="story-count" id="count-todo">0</span>
+        </div>
+        <div class="column-content" id="list-todo"></div>
+      </div>
+
+      <!-- DOING VEERG -->
+      <div class="kanban-column" id="col-doing" data-status="doing">
+        <div class="column-header">
+          <h2>Doing</h2>
+          <span class="story-count" id="count-doing">0</span>
+        </div>
+        <div class="column-content" id="list-doing"></div>
+      </div>
+
+      <!-- DONE VEERG -->
+      <div class="kanban-column" id="col-done" data-status="done">
+        <div class="column-header">
+          <h2>Done</h2>
+          <span class="story-count" id="count-done">0</span>
+        </div>
+        <div class="column-content" id="list-done"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- STORY LISAMISE MODAALAKEN -->
+  <div class="modal-overlay hidden" id="story-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">Lisa uus Story</h2>
+        <button class="close-btn" id="close-modal-btn">&times;</button>
+      </div>
+      <form id="story-form">
+        <input type="hidden" id="story-id">
+        
+        <div class="form-group">
+          <label for="title">Pealkiri *</label>
+          <input type="text" id="title" required placeholder="Tahan lisada funktsiooni X, et...">
+        </div>
+
+        <div class="form-group">
+          <label for="description">Kirjeldus</label>
+          <textarea id="description" rows="3" placeholder="Detailsem kirjeldus siia..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="points">Story punktid *</label>
+            <input type="number" id="points" min="0" required placeholder="Nvt täisarv">
+          </div>
+          <div class="form-group">
+            <label for="status">Staatus</label>
+            <select id="status">
+              <option value="todo">Todo / Backlog</option>
+              <option value="doing">Doing</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="criteria">Vastuvõtutingimus *</label>
+          <input type="text" id="criteria" required placeholder="Kasutaja saab vajutada nuppu Salvesta.">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" id="cancel-modal-btn">Tühista</button>
+          <button type="submit" class="btn-primary" id="save-story-btn">Salvesta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DETAILVAATE / KOMMENTAARIDE MODAALAKEN -->
+  <div class="modal-overlay hidden" id="detail-modal">
+    <div class="modal-card detail-card">
+      <div class="modal-header">
+        <h2 id="detail-title">Story üksikasjad</h2>
+        <button class="close-btn" id="close-detail-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-meta">
+          <span class="badge" id="detail-points">0 punkti</span>
+          <span class="badge" id="detail-status">todo</span>
+        </div>
+        <p class="detail-desc" id="detail-desc">Kirjeldus puudub.</p>
+        
+        <div class="detail-section">
+          <h3>Vastuvõtutingimused:</h3>
+          <ul id="detail-criteria-list"></ul>
+        </div>
+
+        <div class="detail-section">
+          <h3>Kommentaarid (<span id="comment-count">0</span>):</h3>
+          <div class="comments-list" id="comments-list"></div>
+          <form id="comment-form" class="comment-form">
+            <input type="text" id="comment-text" placeholder="Lisa kommentaar..." required>
+            <button type="submit" class="btn-small">Saada</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
