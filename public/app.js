@@ -123,6 +123,7 @@ async function sendReorderToBackend(orderedIds) {
   }
 }
 
+/* PARANDATUD: Eemaldatud objektide topeltviitamine, mis tekitas duplikaatkommentaare */
 async function addComment(e) {
   e.preventDefault();
   if (!currentActiveStory) return;
@@ -143,13 +144,13 @@ async function addComment(e) {
 
     commentInput.value = '';
     
-    // Uuendame lokaalselt detailvaadet ilma kogu lehte laadimata
+    // Kuna currentActiveStory viitab otse objektile allStories massiivis,
+    // piisab sellest ühest pushist, et andmed uuendada korraga igal pool.
+    if (!currentActiveStory.comments) currentActiveStory.comments = [];
     currentActiveStory.comments.push(data);
-    openDetailModal(currentActiveStory.id);
     
-    // Uuendame ka peamist andmemahtu
-    const original = allStories.find(s => s.id === currentActiveStory.id);
-    if (original) original.comments.push(data);
+    // Uuendame detailvaate akna sisu kohe reaalajas
+    openDetailModal(currentActiveStory.id);
   } catch (err) {
     alert(err.message);
   }
@@ -250,7 +251,7 @@ function setupDragAndDrop() {
         const todoCards = Array.from(document.querySelectorAll('#list-todo .story-card'));
         const orderedIds = todoCards.map(card => parseInt(card.dataset.id));
         
-        // Uuendame lokaalset prioriteeti järjekorra säilimiseks
+        // Uuendame lokaalset prioriteeti järjestokeerukuse säilimiseks
         allStories.forEach(s => {
           const idx = orderedIds.indexOf(s.id);
           if (idx !== -1) s.priority = idx + 1;
@@ -308,7 +309,7 @@ function openEditModal(id) {
   document.getElementById('description').value = story.description;
   document.getElementById('points').value = story.points;
   document.getElementById('status').value = story.status;
-  document.getElementById('criteria').value = story.acceptanceCriteria ? story.acceptanceCriteria[0] : '';
+  document.getElementById('criteria').value = story.acceptanceCriteria ? story.acceptanceCriteria : '';
   
   document.getElementById('modal-title').innerText = 'Muuda Storyt';
   document.getElementById('story-modal').classList.remove('hidden');
@@ -345,22 +346,94 @@ function openDetailModal(id) {
     story.comments.forEach(c => {
       const div = document.createElement('div');
       div.className = 'comment-item';
+      div.id = `comment-${c.id}`;
       div.innerHTML = `
         <div class="comment-header">
           <span>Kasutaja</span>
-          <span class="comment-time">${c.createdAt}</span>
+          <div class="comment-actions">
+            <span class="comment-time">${c.createdAt}</span>
+            <button class="action-btn edit-comment-btn" data-id="${c.id}" title="Muuda kommentaari">✏️</button>
+            <button class="action-btn delete-comment-btn" data-id="${c.id}" title="Kustuta kommentaar">🗑️</button>
+          </div>
         </div>
-        <div class="comment-text">${escapeHtml(c.text)}</div>
+        <div class="comment-text" id="comment-text-${c.id}">${escapeHtml(c.text)}</div>
       `;
+
+      // Kuulajad kommentaari nupudele
+      div.querySelector('.delete-comment-btn').addEventListener('click', () => deleteComment(story.id, c.id));
+      div.querySelector('.edit-comment-btn').addEventListener('click', () => startEditComment(story.id, c.id, c.text));
+
       commentsContainer.appendChild(div);
     });
-    // Kerime kommentaaride lõppu
     commentsContainer.scrollTop = commentsContainer.scrollHeight;
   } else {
     commentsContainer.innerHTML = `<p class="subtitle" style="text-align:center; padding: 1rem;">Kommentaare veel pole.</p>`;
   }
 
   document.getElementById('detail-modal').classList.remove('hidden');
+}
+
+// ─── KOMMENTAARIDE MUUTMINE JA KUSTUTAMINE (BOONUS) ────────────────
+
+async function deleteComment(storyId, commentId) {
+  if (!confirm('Kas soovid selle kommentaari kustutada?')) return;
+
+  try {
+    const res = await fetch(`/api/stories/${storyId}/comments/${commentId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Kommentaari kustutamine ebaõnnestus');
+
+    // Uuendame lokaalset seisu
+    if (currentActiveStory && currentActiveStory.comments) {
+      currentActiveStory.comments = currentActiveStory.comments.filter(c => c.id !== commentId);
+    }
+    const original = allStories.find(s => s.id === storyId);
+    if (original && original.comments) {
+      original.comments = original.comments.filter(c => c.id !== commentId);
+    }
+
+    openDetailModal(storyId);
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function startEditComment(storyId, commentId, oldText) {
+  const textEl = document.getElementById(`comment-text-${commentId}`);
+  if (!textEl) return;
+
+  textEl.innerHTML = `
+    <div class="comment-edit-inline" style="display: flex; gap: 0.5rem; margin-top: 0.4rem;">
+      <input type="text" id="edit-comment-input-${commentId}" value="${escapeHtml(oldText)}" style="padding: 0.4rem;">
+      <button class="btn-small" id="save-comment-btn-${commentId}">Salvesta</button>
+      <button class="btn-secondary" id="cancel-comment-btn-${commentId}" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">X</button>
+    </div>
+  `;
+
+  document.getElementById(`cancel-comment-btn-${commentId}`).addEventListener('click', () => {
+    textEl.innerHTML = escapeHtml(oldText);
+  });
+
+  document.getElementById(`save-comment-btn-${commentId}`).addEventListener('click', async () => {
+    const newText = document.getElementById(`edit-comment-input-${commentId}`).value.trim();
+    if (!newText) return;
+
+    try {
+      const res = await fetch(`/api/stories/${storyId}/comments/${commentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: newText })
+      });
+      if (!res.ok) throw new Error('Muutmine ebaõnnestus');
+      const data = await res.json();
+
+      const localComment = currentActiveStory.comments.find(c => c.id === commentId);
+      if (localComment) localComment.text = data.text;
+
+      openDetailModal(storyId);
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 }
 
 function closeModal(modalId) {
