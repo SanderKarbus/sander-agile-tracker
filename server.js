@@ -22,7 +22,8 @@ function readData() {
         points: 3,
         priority: 1,
         acceptanceCriteria: ["Salvestamisel ilmub story Todo veergu."],
-        comments: []
+        comments: [],
+        mockupUrl: ""
       },
       {
         id: 2,
@@ -32,7 +33,8 @@ function readData() {
         points: 5,
         priority: 2,
         acceptanceCriteria: ["Lubatud staatused: todo, doing, done."],
-        comments: []
+        comments: [],
+        mockupUrl: ""
       }
     ];
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
@@ -63,9 +65,9 @@ app.get('/api/stories/:id', (req, res) => {
   res.json(story);
 });
 
-// POST /api/stories - Lisa uus story
+// POST /api/stories - Lisa uus story (TÄIENDATUD: pildi link)
 app.post('/api/stories', (req, res) => {
-  const { title, description, points, acceptanceCriteria } = req.body;
+  const { title, description, points, acceptanceCriteria, mockupUrl } = req.body;
   
   // Punktide range valideerimine vastavalt juhendi nõuetele
   const parsedPoints = parseInt(points);
@@ -81,6 +83,7 @@ app.post('/api/stories', (req, res) => {
     id: stories.length > 0 ? Math.max(...stories.map(s => s.id)) + 1 : 1,
     title,
     description: description || "",
+    mockupUrl: mockupUrl || "", // Salvestab mockup pildi lingi
     status: "todo",
     points: parsedPoints,
     priority: stories.length + 1,
@@ -93,7 +96,7 @@ app.post('/api/stories', (req, res) => {
   res.status(201).json(newStory);
 });
 
-// PUT /api/stories/:id - Muuda storyt
+// PUT /api/stories/:id - Muuda storyt (TÄIENDATUD: pildi link)
 app.put('/api/stories/:id', (req, res) => {
   const stories = readData();
   const idx = stories.findIndex(s => s.id === parseInt(req.params.id));
@@ -108,6 +111,7 @@ app.put('/api/stories/:id', (req, res) => {
     ...stories[idx],
     title: req.body.title || stories[idx].title,
     description: req.body.description || stories[idx].description,
+    mockupUrl: req.body.mockupUrl !== undefined ? req.body.mockupUrl : stories[idx].mockupUrl, // Muudab mockup pildi linki
     points: parsedPoints,
     status: req.body.status || stories[idx].status,
     acceptanceCriteria: req.body.acceptanceCriteria || stories[idx].acceptanceCriteria
