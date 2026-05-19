@@ -48,7 +48,7 @@ function writeData(data) {
 
 // ─── REST API ENDPOINTID ─────────────────────────────────────────
 
-// GET /api/stories - Küsi kõik storyd
+// GET /api/stories - Küsi kaikki storyd
 app.get('/api/stories', (req, res) => {
   const stories = readData();
   stories.sort((a, b) => (a.priority || 0) - (b.priority || 0));
@@ -186,6 +186,40 @@ app.post('/api/stories/:id/comments', (req, res) => {
   story.comments.push(newComment);
   writeData(stories);
   res.status(201).json(newComment);
+});
+
+// PUT /api/stories/:storyId/comments/:commentId - Kommentaari muutmine (BOONUS)
+app.put('/api/stories/:storyId/comments/:commentId', (req, res) => {
+  const { text } = req.body;
+  if (!text || text.trim() === "") return res.status(400).json({ error: "Kommentaar ei tohi olla tühi" });
+
+  const stories = readData();
+  const story = stories.find(s => s.id === parseInt(req.params.storyId));
+  if (!story) return res.status(404).json({ error: "Storyt ei leitud" });
+
+  const comment = story.comments.find(c => c.id === parseInt(req.params.commentId));
+  if (!comment) return res.status(404).json({ error: "Kommentaari ei leitud" });
+
+  comment.text = text;
+  writeData(stories);
+  res.json(comment);
+});
+
+// DELETE /api/stories/:storyId/comments/:commentId - Kommentaari kustutamine (BOONUS)
+app.delete('/api/stories/:storyId/comments/:commentId', (req, res) => {
+  const stories = readData();
+  const story = stories.find(s => s.id === parseInt(req.params.storyId));
+  if (!story) return res.status(404).json({ error: "Storyt ei leitud" });
+
+  const initialLength = story.comments.length;
+  story.comments = story.comments.filter(c => c.id !== parseInt(req.params.commentId));
+
+  if (story.comments.length === initialLength) {
+    return res.status(404).json({ error: "Kommentaari ei leitud" });
+  }
+
+  writeData(stories);
+  res.json({ success: true });
 });
 
 app.listen(PORT, () => {
