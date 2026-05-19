@@ -84,7 +84,8 @@ h1 {
   padding: 0.75rem 1.5rem;
 }
 
-.gitbtn-primary:hover {
+/* PARANDATUD: Kustutatud "git" liides nime eest, et nupp hakkaks reageerima */
+.btn-primary:hover {
   background: #4f46e5;
   box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
 }
@@ -344,6 +345,11 @@ select option {
   margin-bottom: 1.25rem;
 }
 
+/* Abiklass pildisektsiooni varjamiseks/kuvamiseks */
+.detail-section.hidden {
+  display: none;
+}
+
 .detail-section h3 {
   font-size: 0.95rem;
   font-weight: 600;
@@ -397,4 +403,22 @@ select option {
 .comment-form {
   display: flex;
   gap: 0.5rem;
+}
+
+/* KOMMENTAARIDE NUPUD JA TEGEVUSED */
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.comment-actions .action-btn {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.2rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.comment-actions .action-btn:hover {
+  opacity: 1;
 }
