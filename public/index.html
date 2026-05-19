@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agile Tracker - Kanban</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://googleapis.com">
-  <link rel="preconnect" href="https://gstatic.com" crossorigin>
-  <link href="https://googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -75,6 +75,12 @@
           <textarea id="description" rows="3" placeholder="Detailsem kirjeldus siia..."></textarea>
         </div>
 
+        <!-- LISATUD: Mockup pildi URL sisendväli app.js jaoks -->
+        <div class="form-group">
+          <label for="mockupUrl">Mockup pildi URL</label>
+          <input type="text" id="mockupUrl" placeholder="https://example.com">
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label for="points">Story punktid *</label>
@@ -117,6 +123,12 @@
         </div>
         <p class="detail-desc" id="detail-desc">Kirjeldus puudub.</p>
         
+        <!-- LISATUD: Mockup pildi kuvamise sektsioon app.js jaoks -->
+        <div class="detail-section hidden" id="detail-mockup-section">
+          <h3>Mockup kavand:</h3>
+          <img id="detail-mockup-img" src="" alt="Mockup kavand" style="max-width: 100%; border-radius: 8px; margin-top: 0.5rem; border: 1px solid var(--glass-border);">
+        </div>
+
         <div class="detail-section">
           <h3>Vastuvõtutingimused:</h3>
           <ul id="detail-criteria-list"></ul>
