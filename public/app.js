@@ -36,6 +36,7 @@ async function saveStory(e) {
   const points = parseInt(document.getElementById('points').value);
   const status = document.getElementById('status').value;
   const criteria = document.getElementById('criteria').value.trim();
+  const mockupUrl = document.getElementById('mockupUrl').value.trim(); // LISATUD: Mockup pildi URL
 
   // Punktide range kontroll vastavalt juhendile
   if (isNaN(points) || points < 0) {
@@ -48,6 +49,7 @@ async function saveStory(e) {
     description,
     points,
     status,
+    mockupUrl, // LISATUD: pildi andmed päringusse
     acceptanceCriteria: [criteria]
   };
 
@@ -123,7 +125,6 @@ async function sendReorderToBackend(orderedIds) {
   }
 }
 
-/* PARANDATUD: Eemaldatud objektide topeltviitamine, mis tekitas duplikaatkommentaare */
 async function addComment(e) {
   e.preventDefault();
   if (!currentActiveStory) return;
@@ -144,233 +145,13 @@ async function addComment(e) {
 
     commentInput.value = '';
     
-    // Kuna currentActiveStory viitab otse objektile allStories massiivis,
-    // piisab sellest ühest pushist, et andmed uuendada korraga igal pool.
     if (!currentActiveStory.comments) currentActiveStory.comments = [];
     currentActiveStory.comments.push(data);
     
-    // Uuendame detailvaate akna sisu kohe reaalajas
     openDetailModal(currentActiveStory.id);
   } catch (err) {
     alert(err.message);
   }
-}
-
-// ─── UI RENDERING ────────────────────────────────────────────────
-
-function renderBoard() {
-  const lists = {
-    todo: document.getElementById('list-todo'),
-    doing: document.getElementById('list-doing'),
-    done: document.getElementById('list-done')
-  };
-
-  // Puhastame veerud
-  Object.values(lists).forEach(list => list.innerHTML = '');
-
-  allStories.forEach(story => {
-    const column = lists[story.status];
-    if (!column) return;
-
-    const card = document.createElement('div');
-    card.className = 'story-card';
-    card.id = `story-${story.id}`;
-    card.dataset.id = story.id;
-    card.draggable = true; // Lubame lohistamise!
-
-    card.innerHTML = `
-      <h3>${escapeHtml(story.title)}</h3>
-      <div class="story-footer">
-        <span class="badge">${story.points} SP</span>
-        <div class="card-actions">
-          <button class="action-btn edit-btn" title="Muuda">✏️</button>
-          <button class="action-btn delete-btn" title="Kustuta">🗑️</button>
-        </div>
-      </div>
-    `;
-
-    // Klikk kaardil (avab detailvaate/kommentaarid), välja arvatud nupud
-    card.addEventListener('click', (e) => {
-      if (e.target.closest('.action-btn')) return;
-      openDetailModal(story.id);
-    });
-
-    // Nuppude kuulajad
-    card.querySelector('.edit-btn').addEventListener('click', () => openEditModal(story.id));
-    card.querySelector('.delete-btn').addEventListener('click', () => deleteStory(story.id));
-
-    // Drag sündmused konkreetsele kaardile
-    card.addEventListener('dragstart', () => card.classList.add('dragging'));
-    card.addEventListener('dragend', () => card.classList.remove('dragging'));
-
-    column.appendChild(card);
-  });
-
-  updateColumnCounts();
-}
-
-function updateColumnCounts() {
-  const statuses = ['todo', 'doing', 'done'];
-  statuses.forEach(status => {
-    const count = allStories.filter(s => s.status === status).length;
-    document.getElementById(`count-${status}`).innerText = count;
-  });
-}
-
-// ─── LOOHISTAMISE LOOGIKA (DRAG AND DROP) ───────────────────────
-
-function setupDragAndDrop() {
-  const columns = document.querySelectorAll('.column-content');
-
-  columns.forEach(column => {
-    column.addEventListener('dragover', (e) => {
-      e.preventDefault(); // Kohustuslik, et lubada drop'imist
-      const draggingCard = document.querySelector('.story-card.dragging');
-      const afterElement = getDragAfterElement(column, e.clientY);
-      
-      if (afterElement == null) {
-        column.appendChild(draggingCard);
-      } else {
-        column.insertBefore(draggingCard, afterElement);
-      }
-    });
-
-    column.addEventListener('drop', async () => {
-      const draggingCard = document.querySelector('.story-card.dragging');
-      if (!draggingCard) return;
-
-      const storyId = parseInt(draggingCard.dataset.id);
-      const parentColumn = column.closest('.kanban-column');
-      const newStatus = parentColumn.dataset.status;
-
-      // 1. Muudame staatust andmebaasis, kui liigutati teise veergu
-      await updateStoryStatus(storyId, newStatus);
-
-      // 2. Kui liigutamine toimus Todo/Backlog veerus, salvestame ka uue prioriteedi/järjekorra
-      if (newStatus === 'todo') {
-        const todoCards = Array.from(document.querySelectorAll('#list-todo .story-card'));
-        const orderedIds = todoCards.map(card => parseInt(card.dataset.id));
-        
-        // Uuendame lokaalset prioriteeti järjestokeerukuse säilimiseks
-        allStories.forEach(s => {
-          const idx = orderedIds.indexOf(s.id);
-          if (idx !== -1) s.priority = idx + 1;
-        });
-
-        await sendReorderToBackend(orderedIds);
-      }
-    });
-  });
-}
-
-// Abifunktsioon tuvastamaks, kuhu vahele kaart lohistatakse
-function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll('.story-card:not(.dragging)')];
-
-  return draggableElements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child };
-    } else {
-      return closest;
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-
-// ─── MODAALAKENDE HALDUS ─────────────────────────────────────────
-
-function setupEventListeners() {
-  // Lisa uus story modal
-  document.getElementById('open-modal-btn').addEventListener('click', () => openAddModal());
-  document.getElementById('close-modal-btn').addEventListener('click', () => closeModal('story-modal'));
-  document.getElementById('cancel-modal-btn').addEventListener('click', () => closeModal('story-modal'));
-  document.getElementById('story-form').addEventListener('submit', saveStory);
-
-  // Detailvaade modal
-  document.getElementById('close-detail-btn').addEventListener('click', () => closeModal('detail-modal'));
-  document.getElementById('comment-form').addEventListener('submit', addComment);
-}
-
-function openAddModal() {
-  document.getElementById('story-form').reset();
-  document.getElementById('story-id').value = '';
-  document.getElementById('modal-title').innerText = 'Lisa uus Story';
-  document.getElementById('status').disabled = false;
-  document.getElementById('story-modal').classList.remove('hidden');
-}
-
-function openEditModal(id) {
-  const story = allStories.find(s => s.id === id);
-  if (!story) return;
-
-  document.getElementById('story-id').value = story.id;
-  document.getElementById('title').value = story.title;
-  document.getElementById('description').value = story.description;
-  document.getElementById('points').value = story.points;
-  document.getElementById('status').value = story.status;
-  document.getElementById('criteria').value = story.acceptanceCriteria ? story.acceptanceCriteria : '';
-  
-  document.getElementById('modal-title').innerText = 'Muuda Storyt';
-  document.getElementById('story-modal').classList.remove('hidden');
-}
-
-function openDetailModal(id) {
-  const story = allStories.find(s => s.id === id);
-  if (!story) return;
-
-  currentActiveStory = story;
-
-  document.getElementById('detail-title').innerText = story.title;
-  document.getElementById('detail-points').innerText = `${story.points} SP`;
-  document.getElementById('detail-status').innerText = story.status.toUpperCase();
-  document.getElementById('detail-desc').innerText = story.description || 'Kirjeldus puudub.';
-
-  // Vastuvõtutingimused
-  const criteriaList = document.getElementById('detail-criteria-list');
-  criteriaList.innerHTML = '';
-  if (story.acceptanceCriteria) {
-    story.acceptanceCriteria.forEach(c => {
-      const li = document.createElement('li');
-      li.innerText = c;
-      criteriaList.appendChild(li);
-    });
-  }
-
-  // Kommentaarid
-  document.getElementById('comment-count').innerText = story.comments ? story.comments.length : 0;
-  const commentsContainer = document.getElementById('comments-list');
-  commentsContainer.innerHTML = '';
-  
-  if (story.comments && story.comments.length > 0) {
-    story.comments.forEach(c => {
-      const div = document.createElement('div');
-      div.className = 'comment-item';
-      div.id = `comment-${c.id}`;
-      div.innerHTML = `
-        <div class="comment-header">
-          <span>Kasutaja</span>
-          <div class="comment-actions">
-            <span class="comment-time">${c.createdAt}</span>
-            <button class="action-btn edit-comment-btn" data-id="${c.id}" title="Muuda kommentaari">✏️</button>
-            <button class="action-btn delete-comment-btn" data-id="${c.id}" title="Kustuta kommentaar">🗑️</button>
-          </div>
-        </div>
-        <div class="comment-text" id="comment-text-${c.id}">${escapeHtml(c.text)}</div>
-      `;
-
-      // Kuulajad kommentaari nupudele
-      div.querySelector('.delete-comment-btn').addEventListener('click', () => deleteComment(story.id, c.id));
-      div.querySelector('.edit-comment-btn').addEventListener('click', () => startEditComment(story.id, c.id, c.text));
-
-      commentsContainer.appendChild(div);
-    });
-    commentsContainer.scrollTop = commentsContainer.scrollHeight;
-  } else {
-    commentsContainer.innerHTML = `<p class="subtitle" style="text-align:center; padding: 1rem;">Kommentaare veel pole.</p>`;
-  }
-
-  document.getElementById('detail-modal').classList.remove('hidden');
 }
 
 // ─── KOMMENTAARIDE MUUTMINE JA KUSTUTAMINE (BOONUS) ────────────────
@@ -382,7 +163,6 @@ async function deleteComment(storyId, commentId) {
     const res = await fetch(`/api/stories/${storyId}/comments/${commentId}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Kommentaari kustutamine ebaõnnestus');
 
-    // Uuendame lokaalset seisu
     if (currentActiveStory && currentActiveStory.comments) {
       currentActiveStory.comments = currentActiveStory.comments.filter(c => c.id !== commentId);
     }
@@ -434,6 +214,227 @@ function startEditComment(storyId, commentId, oldText) {
       alert(err.message);
     }
   });
+}
+
+// ─── UI RENDERING ────────────────────────────────────────────────
+
+function renderBoard() {
+  const lists = {
+    todo: document.getElementById('list-todo'),
+    doing: document.getElementById('list-doing'),
+    done: document.getElementById('list-done')
+  };
+
+  Object.values(lists).forEach(list => list.innerHTML = '');
+
+  allStories.forEach(story => {
+    const column = lists[story.status];
+    if (!column) return;
+
+    const card = document.createElement('div');
+    card.className = 'story-card';
+    card.id = `story-${story.id}`;
+    card.dataset.id = story.id;
+    card.draggable = true;
+
+    card.innerHTML = `
+      <h3>${escapeHtml(story.title)}</h3>
+      <div class="story-footer">
+        <span class="badge">${story.points} SP</span>
+        <div class="card-actions">
+          <button class="action-btn edit-btn" title="Muuda">✏️</button>
+          <button class="action-btn delete-btn" title="Kustuta">🗑️</button>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.action-btn')) return;
+      openDetailModal(story.id);
+    });
+
+    card.querySelector('.edit-btn').addEventListener('click', () => openEditModal(story.id));
+    card.querySelector('.delete-btn').addEventListener('click', () => deleteStory(story.id));
+
+    card.addEventListener('dragstart', () => card.classList.add('dragging'));
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+    column.appendChild(card);
+  });
+
+  updateColumnCounts();
+}
+
+function updateColumnCounts() {
+  const statuses = ['todo', 'doing', 'done'];
+  statuses.forEach(status => {
+    const count = allStories.filter(s => s.status === status).length;
+    document.getElementById(`count-${status}`).innerText = count;
+  });
+}
+
+// ─── LOHISTAMISE LOOGIKA (DRAG AND DROP) ───────────────────────
+
+function setupDragAndDrop() {
+  const columns = document.querySelectorAll('.column-content');
+
+  columns.forEach(column => {
+    column.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const draggingCard = document.querySelector('.story-card.dragging');
+      const afterElement = getDragAfterElement(column, e.clientY);
+      
+      if (afterElement == null) {
+        column.appendChild(draggingCard);
+      } else {
+        column.insertBefore(draggingCard, afterElement);
+      }
+    });
+
+    column.addEventListener('drop', async () => {
+      const draggingCard = document.querySelector('.story-card.dragging');
+      if (!draggingCard) return;
+
+      const storyId = parseInt(draggingCard.dataset.id);
+      const parentColumn = column.closest('.kanban-column');
+      const newStatus = parentColumn.dataset.status;
+
+      await updateStoryStatus(storyId, newStatus);
+
+      if (newStatus === 'todo') {
+        const todoCards = Array.from(document.querySelectorAll('#list-todo .story-card'));
+        const orderedIds = todoCards.map(card => parseInt(card.dataset.id));
+        
+        allStories.forEach(s => {
+          const idx = orderedIds.indexOf(s.id);
+          if (idx !== -1) s.priority = idx + 1;
+        });
+
+        await sendReorderToBackend(orderedIds);
+      }
+    });
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.story-card:not(.dragging)')];
+
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// ─── MODAALAKENDE HALDUS ─────────────────────────────────────────
+
+function setupEventListeners() {
+  document.getElementById('open-modal-btn').addEventListener('click', () => openAddModal());
+  document.getElementById('close-modal-btn').addEventListener('click', () => closeModal('story-modal'));
+  document.getElementById('cancel-modal-btn').addEventListener('click', () => closeModal('story-modal'));
+  document.getElementById('story-form').addEventListener('submit', saveStory);
+
+  document.getElementById('close-detail-btn').addEventListener('click', () => closeModal('detail-modal'));
+  document.getElementById('comment-form').addEventListener('submit', addComment);
+}
+
+function openAddModal() {
+  document.getElementById('story-form').reset();
+  document.getElementById('story-id').value = '';
+  document.getElementById('mockupUrl').value = ''; // Tühjenda mockupURL väli
+  document.getElementById('modal-title').innerText = 'Lisa uus Story';
+  document.getElementById('status').disabled = false;
+  document.getElementById('story-modal').classList.remove('hidden');
+}
+
+function openEditModal(id) {
+  const story = allStories.find(s => s.id === id);
+  if (!story) return;
+
+  document.getElementById('story-id').value = story.id;
+  document.getElementById('title').value = story.title;
+  document.getElementById('description').value = story.description;
+  document.getElementById('points').value = story.points;
+  document.getElementById('status').value = story.status;
+  document.getElementById('criteria').value = story.acceptanceCriteria ? story.acceptanceCriteria : '';
+  document.getElementById('mockupUrl').value = story.mockupUrl || ''; // Täida mockupURL väli muutmisel
+  
+  document.getElementById('modal-title').innerText = 'Muuda Storyt';
+  document.getElementById('story-modal').classList.remove('hidden');
+}
+
+function openDetailModal(id) {
+  const story = allStories.find(s => s.id === id);
+  if (!story) return;
+
+  currentActiveStory = story;
+
+  document.getElementById('detail-title').innerText = story.title;
+  document.getElementById('detail-points').innerText = `${story.points} SP`;
+  document.getElementById('detail-status').innerText = story.status.toUpperCase();
+  document.getElementById('detail-desc').innerText = story.description || 'Kirjeldus puudub.';
+
+  // TÄIENDATUD: Mockup pildi kuvamise loogika detailvaates
+  const mockupSection = document.getElementById('detail-mockup-section');
+  const mockupImg = document.getElementById('detail-mockup-img');
+  if (mockupSection && mockupImg) {
+    if (story.mockupUrl && story.mockupUrl.trim() !== "") {
+      mockupImg.src = story.mockupUrl;
+      mockupSection.classList.remove('hidden');
+    } else {
+      mockupSection.classList.add('hidden');
+      mockupImg.src = "";
+    }
+  }
+
+  // Vastuvõtutingimused
+  const criteriaList = document.getElementById('detail-criteria-list');
+  criteriaList.innerHTML = '';
+  if (story.acceptanceCriteria) {
+    story.acceptanceCriteria.forEach(c => {
+      const li = document.createElement('li');
+      li.innerText = c;
+      criteriaList.appendChild(li);
+    });
+  }
+
+  // Kommentaarid
+  document.getElementById('comment-count').innerText = story.comments ? story.comments.length : 0;
+  const commentsContainer = document.getElementById('comments-list');
+  commentsContainer.innerHTML = '';
+  
+  if (story.comments && story.comments.length > 0) {
+    story.comments.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'comment-item';
+      div.id = `comment-${c.id}`;
+      div.innerHTML = `
+        <div class="comment-header">
+          <span>Kasutaja</span>
+          <div class="comment-actions">
+            <span class="comment-time">${c.createdAt}</span>
+            <button class="action-btn edit-comment-btn" data-id="${c.id}" title="Muuda kommentaari">✏️</button>
+            <button class="action-btn delete-comment-btn" data-id="${c.id}" title="Kustuta kommentaar">🗑️</button>
+          </div>
+        </div>
+        <div class="comment-text" id="comment-text-${c.id}">${escapeHtml(c.text)}</div>
+      `;
+
+      div.querySelector('.delete-comment-btn').addEventListener('click', () => deleteComment(story.id, c.id));
+      div.querySelector('.edit-comment-btn').addEventListener('click', () => startEditComment(story.id, c.id, c.text));
+
+      commentsContainer.appendChild(div);
+    });
+    commentsContainer.scrollTop = commentsContainer.scrollHeight;
+  } else {
+    commentsContainer.innerHTML = `<p class="subtitle" style="text-align:center; padding: 1rem;">Kommentaare veel pole.</p>`;
+  }
+
+  document.getElementById('detail-modal').classList.remove('hidden');
 }
 
 function closeModal(modalId) {
