@@ -69,10 +69,9 @@
     "points": 8,
     "priority": 4,
     "acceptanceCriteria": [
-      "Backlogis olevaid story’sid saab hiirega lohistada.",
-      "Uus järjekord salvestatakse.",
-      "Pärast lehe uuendamist jääb järjekord samaks."
+      "Backlogis olevaid story’sid saab hiirega lohistada.,Uus järjekord salvestatakse.,Pärast lehe uuendamist jääb järjekord samaks."
     ],
-    "comments": []
+    "comments": [],
+    "mockupUrl": "mockup.png"
   }
 ]
