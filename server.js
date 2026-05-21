@@ -79,11 +79,14 @@ app.post('/api/stories', (req, res) => {
   }
 
   const stories = readData();
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
   const newStory = {
     id: stories.length > 0 ? Math.max(...stories.map(s => s.id)) + 1 : 1,
     title,
     description: description || "",
-    mockupUrl: mockupUrl || "", // Salvestab mockup pildi lingi
+    mockupUrl: mockupUrl || "",
+    createdAt: now,
+    updatedAt: now,
     status: "todo",
     points: parsedPoints,
     priority: stories.length + 1,
