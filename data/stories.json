@@ -12,6 +12,8 @@
       "Vormis saab sisestada punktid.",
       "Salvestamisel ilmub story Todo / Backlog veergu."
     ],
+    "createdAt": "2026-05-19 06:13",
+    "updatedAt": "2026-05-19 06:13",
     "comments": [
       {
         "id": 1,
@@ -32,6 +34,8 @@
       "Lubatud staatused on todo, doing ja done.",
       "Story liigub õige staatuse veergu."
     ],
+    "createdAt": "2026-05-19 05:58",
+    "updatedAt": "2026-05-19 05:58",
     "comments": [
       {
         "id": 1,
@@ -53,6 +57,8 @@
       "Kommentaar kuvatakse story juures.",
       "Kommentaari juures kuvatakse lisamise aeg."
     ],
+    "createdAt": "2026-05-19 08:30",
+    "updatedAt": "2026-05-19 08:30",
     "comments": [
       {
         "id": 1,
@@ -68,12 +74,14 @@
     "status": "done",
     "points": 8,
     "priority": 4,
-"acceptanceCriteria": [
+    "acceptanceCriteria": [
         "Backlogis olevaid story'sid saab hiirega lohistada.",
         "Uus järjekord salvestatakse.",
         "Pärast lehe uuendamist jääb järjekord samaks."
       ],
-    "comments": [],
-    "mockupUrl": "mockup.png"
+      "createdAt": "2026-05-19 08:30",
+      "updatedAt": "2026-05-19 08:30",
+      "comments": [],
+      "mockupUrl": "mockup.png"
   }
 ]
