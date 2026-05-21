@@ -35,8 +35,19 @@ async function saveStory(e) {
   const description = document.getElementById('description').value.trim();
   const points = parseInt(document.getElementById('points').value);
   const status = document.getElementById('status').value;
-  const criteria = document.getElementById('criteria').value.trim();
-  const mockupUrl = document.getElementById('mockupUrl').value.trim(); // LISATUD: Mockup pildi URL
+  const mockupUrl = document.getElementById('mockupUrl').value.trim();
+
+  // Kogume kõik vastuvõtutingimused
+  const criteriaInputs = document.querySelectorAll('.criteria-input');
+  const criteriaList = [];
+  criteriaInputs.forEach(input => {
+    const val = input.value.trim();
+    if (val) criteriaList.push(val);
+  });
+  if (criteriaList.length === 0) {
+    alert("Viga: Lisa vähemalt üks vastuvõtutingimus!");
+    return;
+  }
 
   // Punktide range kontroll vastavalt juhendile
   if (isNaN(points) || points < 0) {
@@ -49,8 +60,8 @@ async function saveStory(e) {
     description,
     points,
     status,
-    mockupUrl, // LISATUD: pildi andmed päringusse
-    acceptanceCriteria: [criteria]
+    mockupUrl,
+    acceptanceCriteria: criteriaList
   };
 
   try {
@@ -343,15 +354,23 @@ function setupEventListeners() {
 
   document.getElementById('close-detail-btn').addEventListener('click', () => closeModal('detail-modal'));
   document.getElementById('comment-form').addEventListener('submit', addComment);
+  document.getElementById('add-criteria-btn').addEventListener('click', addCriteriaRow);
 }
 
 function openAddModal() {
   document.getElementById('story-form').reset();
   document.getElementById('story-id').value = '';
-  document.getElementById('mockupUrl').value = ''; // Tühjenda mockupURL väli
+  document.getElementById('mockupUrl').value = '';
   document.getElementById('modal-title').innerText = 'Lisa uus Story';
   document.getElementById('status').disabled = false;
   document.getElementById('story-modal').classList.remove('hidden');
+  // Lähtesta kriteeriumid üheks tühjaks väljaks
+  const criteriaContainer = document.getElementById('criteria-list');
+  criteriaContainer.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'criteria-row';
+  row.innerHTML = '<input type="text" class="criteria-input" required placeholder="Kasutaja saab vajutada nuppu Salvesta.">';
+  criteriaContainer.appendChild(row);
 }
 
 function openEditModal(id) {
@@ -363,8 +382,18 @@ function openEditModal(id) {
   document.getElementById('description').value = story.description;
   document.getElementById('points').value = story.points;
   document.getElementById('status').value = story.status;
-  document.getElementById('criteria').value = story.acceptanceCriteria ? story.acceptanceCriteria : '';
-  document.getElementById('mockupUrl').value = story.mockupUrl || ''; // Täida mockupURL väli muutmisel
+  document.getElementById('mockupUrl').value = story.mockupUrl || '';
+
+  // Täida vastuvõtutingimuste väljad
+  const criteriaContainer = document.getElementById('criteria-list');
+  criteriaContainer.innerHTML = '';
+  const acList = story.acceptanceCriteria && story.acceptanceCriteria.length > 0 ? story.acceptanceCriteria : [''];
+  acList.forEach(text => {
+    const row = document.createElement('div');
+    row.className = 'criteria-row';
+    row.innerHTML = `<input type="text" class="criteria-input" required value="${escapeHtml(text)}">`;
+    criteriaContainer.appendChild(row);
+  });
   
   document.getElementById('modal-title').innerText = 'Muuda Storyt';
   document.getElementById('story-modal').classList.remove('hidden');
@@ -458,4 +487,13 @@ function escapeHtml(text) {
 
 function showErrorNotification(msg) {
   console.error(msg);
+}
+
+function addCriteriaRow() {
+  const container = document.getElementById('criteria-list');
+  const row = document.createElement('div');
+  row.className = 'criteria-row';
+  row.innerHTML = '<input type="text" class="criteria-input" placeholder="Järgmine vastuvõtutingimus...">';
+  container.appendChild(row);
+  row.querySelector('input').focus();
 }

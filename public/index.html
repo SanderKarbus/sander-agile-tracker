@@ -100,8 +100,13 @@
         </div>
 
         <div class="form-group">
-          <label for="criteria">Vastuvõtutingimus *</label>
-          <input type="text" id="criteria" required placeholder="Kasutaja saab vajutada nuppu Salvesta.">
+          <label>Vastuvõtutingimused *</label>
+          <div id="criteria-list">
+            <div class="criteria-row">
+              <input type="text" class="criteria-input" required placeholder="Kasutaja saab vajutada nuppu Salvesta.">
+            </div>
+          </div>
+          <button type="button" class="btn-small btn-add-criteria" id="add-criteria-btn">+ Lisa veel</button>
         </div>
 
         <div class="form-actions">
