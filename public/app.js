@@ -268,8 +268,11 @@ function renderBoard() {
 function updateColumnCounts() {
   const statuses = ['todo', 'doing', 'done'];
   statuses.forEach(status => {
-    const count = allStories.filter(s => s.status === status).length;
+    const stories = allStories.filter(s => s.status === status);
+    const count = stories.length;
+    const totalPoints = stories.reduce((sum, s) => sum + (s.points || 0), 0);
     document.getElementById(`count-${status}`).innerText = count;
+    document.getElementById(`points-${status}`).innerText = `Punkte kokku: ${totalPoints}`;
   });
 }
 
