@@ -377,6 +377,8 @@ function openDetailModal(id) {
   document.getElementById('detail-points').innerText = `${story.points} SP`;
   document.getElementById('detail-status').innerText = story.status.toUpperCase();
   document.getElementById('detail-desc').innerText = story.description || 'Kirjeldus puudub.';
+  document.getElementById('detail-created').innerText = story.createdAt ? `Loodud: ${story.createdAt}` : '';
+  document.getElementById('detail-updated').innerText = story.updatedAt ? `Muudetud: ${story.updatedAt}` : '';
 
   // TÄIENDATUD: Mockup pildi kuvamise loogika detailvaates
   const mockupSection = document.getElementById('detail-mockup-section');
