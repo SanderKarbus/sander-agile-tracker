@@ -68,9 +68,11 @@
     "status": "done",
     "points": 8,
     "priority": 4,
-    "acceptanceCriteria": [
-      "Backlogis olevaid story’sid saab hiirega lohistada.,Uus järjekord salvestatakse.,Pärast lehe uuendamist jääb järjekord samaks."
-    ],
+"acceptanceCriteria": [
+        "Backlogis olevaid story'sid saab hiirega lohistada.",
+        "Uus järjekord salvestatakse.",
+        "Pärast lehe uuendamist jääb järjekord samaks."
+      ],
     "comments": [],
     "mockupUrl": "mockup.png"
   }
