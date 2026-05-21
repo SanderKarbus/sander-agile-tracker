@@ -18,6 +18,8 @@ function readData() {
         id: 1,
         title: "Kasutajana tahan lisada uue story, et saaksin tööülesande backlogi panna.",
         description: "Vormis saab sisestada andmeid.",
+        createdAt: "2026-05-19 06:13",
+        updatedAt: "2026-05-19 06:13",
         status: "todo",
         points: 3,
         priority: 1,
@@ -29,6 +31,8 @@ function readData() {
         id: 2,
         title: "Kasutajana tahan muuta story staatust, et näidata töö edenemist.",
         description: "Story liigub õige staatuse veergu.",
+        createdAt: "2026-05-19 05:58",
+        updatedAt: "2026-05-19 05:58",
         status: "doing",
         points: 5,
         priority: 2,
@@ -89,7 +93,7 @@ app.post('/api/stories', (req, res) => {
     updatedAt: now,
     status: "todo",
     points: parsedPoints,
-    priority: stories.length + 1,
+    priority: Math.max(...stories.map(s => s.priority), 0) + 1,
     acceptanceCriteria: Array.isArray(acceptanceCriteria) ? acceptanceCriteria : [acceptanceCriteria || "Vastuvõtutingimus puudub"],
     comments: []
   };
