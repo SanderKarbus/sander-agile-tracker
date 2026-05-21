@@ -110,14 +110,16 @@ app.put('/api/stories/:id', (req, res) => {
     return res.status(400).json({ error: "Punktid peavad olema mitunegatiivne täisarv!" });
   }
 
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
   stories[idx] = {
     ...stories[idx],
     title: req.body.title || stories[idx].title,
     description: req.body.description || stories[idx].description,
-    mockupUrl: req.body.mockupUrl !== undefined ? req.body.mockupUrl : stories[idx].mockupUrl, // Muudab mockup pildi linki
+    mockupUrl: req.body.mockupUrl !== undefined ? req.body.mockupUrl : stories[idx].mockupUrl,
     points: parsedPoints,
     status: req.body.status || stories[idx].status,
-    acceptanceCriteria: req.body.acceptanceCriteria || stories[idx].acceptanceCriteria
+    acceptanceCriteria: req.body.acceptanceCriteria || stories[idx].acceptanceCriteria,
+    updatedAt: now
   };
 
   writeData(stories);
