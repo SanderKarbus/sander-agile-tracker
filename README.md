@@ -70,7 +70,6 @@ Esimene käivitus loob automaatselt data/stories.json faili näidisandmetega.
 - [ ] Otsing (search/filter)
 - [ ] Filtreerimine staatuse või punktide järgi
 - [ ] Automaattestid REST API jaoks
-- [ ] GitHubi issue'd ja feature branch'id (tehtud kohalikult, ootab remote repo loomist)
 
 ## 5. Millised olid kõige keerulisemad kohad?
 
